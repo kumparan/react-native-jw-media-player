@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, {Component} from 'react';
 import {
   StyleSheet,
   View,
@@ -6,48 +6,54 @@ import {
   SafeAreaView,
   Dimensions,
   Platform,
-  StatusBar
-} from "react-native";
+  StatusBar,
+} from 'react-native';
 
-import JWPlayer from "react-native-jw-media-player";
+import JWPlayer from 'react-native-jw-media-player';
 
-const { width } = Dimensions.get("window");
+const {width} = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
   },
   subContainer: {
     flex: 1,
-    borderColor: "gray",
+    borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 40,
-    backgroundColor: "black",
-    alignItems: "center"
+    backgroundColor: 'black',
+    alignItems: 'center',
   },
   text: {
     fontSize: 18,
-    color: "white",
-    margin: 40
+    color: 'white',
+    margin: 40,
   },
   playerContainer: {
     height: 300,
     width: width - 40,
-    backgroundColor: "white"
+    backgroundColor: 'white',
   },
   warningText: {
-    color: "red",
-    fontWeight: "700",
-    position: "absolute",
-    alignSelf: "center",
-    top: 20
+    color: 'red',
+    fontWeight: '700',
+    position: 'absolute',
+    alignSelf: 'center',
+    top: 20,
   },
   player: {
-    flex: 1
-  }
+    flex: 1,
+  },
 });
 
 export default class App extends Component {
+  componentDidMount() {
+    // setTimeout(() => {
+    //   this.JWPlayer.togglePIP();
+    // }, 1000);
+  }
+
   onBeforePlay() {
     // eslint-disable-line
     // console.log('onBeforePlay was called');
@@ -60,12 +66,12 @@ export default class App extends Component {
 
   onPlayerError(error) {
     // eslint-disable-line
-    console.log("onPlayerError was called with error: ", error);
+    console.log('onPlayerError was called with error: ', error);
   }
 
   onSetupPlayerError(error) {
     // eslint-disable-line
-    console.log("onSetupPlayerError was called with error: ", error);
+    console.log('onSetupPlayerError was called with error: ', error);
   }
 
   onBuffer() {
@@ -73,7 +79,7 @@ export default class App extends Component {
     // console.log('onBuffer was called');
   }
 
-  onTime({ position, duration }) {
+  onTime({position, duration}) {
     // eslint-disable-line
     // console.log('onTime was called with: ', position, duration);
   }
@@ -95,23 +101,27 @@ export default class App extends Component {
           </Text>
           <View style={styles.playerContainer}>
             <Text
-              style={styles.warningText}
-            >{`If you see this text your configuration or setup is wrong.\n\nDid you forget to add your JW key to your ${
-              Platform.OS === "ios" ? "plist" : "manifest"
+              style={
+                styles.warningText
+              }>{`If you see this text your configuration or setup is wrong.\n\nDid you forget to add your JW key to your ${
+              Platform.OS === 'ios' ? 'plist' : 'manifest'
             }?\nDid you add a playlistItem with at least a file paramter?`}</Text>
             <JWPlayer
+              ref={p => (this.JWPlayer = p)}
               style={styles.player}
-              playlistItem={{
-                mediaId: "1",
-                file: "https://content.jwplatform.com/manifests/vM7nH0Kl.m3u8",
-                autostart: false,
-              }}
+              playlist={[
+                {
+                  mediaId: '1',
+                  file: 'https://content.jwplatform.com/manifests/aMWzNMG2.m3u8',
+                  autostart: false,
+                },
+              ]}
               onBeforePlay={() => this.onBeforePlay()}
               onPlay={() => this.onPlay()}
-              onSetupPlayerError={(e) => this.onSetupPlayerError(e)}
-              onPlayerError={(e) => this.onPlayerError(e)}
+              onSetupPlayerError={e => this.onSetupPlayerError(e)}
+              onPlayerError={e => this.onPlayerError(e)}
               onBuffer={() => this.onBuffer()}
-              onTime={(time) => this.onTime(time)}
+              onTime={time => this.onTime(time)}
               nativeFullScreen={true} // when undefined or false you will need to handle the player styles in onFullScreen & onFullScreenExit callbacks
               onFullScreen={() => this.onFullScreen()}
               onFullScreenExit={() => this.onFullScreenExit()}
