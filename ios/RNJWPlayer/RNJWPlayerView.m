@@ -2,6 +2,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AVKit/AVKit.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import <JWPlayerKit/JWPlayerKit-Swift.h>
+#import <JWPlayerKit/JWPlayerObjCViewController.h>
 
 @implementation RNJWPlayerView
 
@@ -556,38 +558,11 @@
     id ads = config[@"advertising"];
     if (ads != nil && (ads != (id)[NSNull null])) {
         JWAdvertisingConfig* advertising;
-        JWAdsAdvertisingConfigBuilder* adConfigBuilder = [[JWAdsAdvertisingConfigBuilder alloc] init];
-                 
-         id adClient = config[@"adClient"];
-         if ((adClient != nil) && (adClient != (id)[NSNull null])) {
-             JWAdClient jwAdClient;
-             switch ([adClient intValue]) {
-                 case 0:
-                     jwAdClient = JWAdClientJWPlayer;
-                     break;
-                 case 1:
-    //                 JWImaAdvertisingConfigBuilder
-                     jwAdClient = JWAdClientGoogleIMA;
-                     break;
-                 case 2:
-    //                 JWImaDaiAdvertisingConfigBuilder
-                     jwAdClient = JWAdClientGoogleIMADAI;
-                     break;
-                 case 3:
-                     jwAdClient = JWAdClientUnknown;
-                     break;
-
-                 default:
-                     jwAdClient = JWAdClientUnknown;
-                     break;
-             }
-         } else {
-
-         }
+        JWImaAdvertisingConfigBuilder* adConfigBuilder = [[JWImaAdvertisingConfigBuilder alloc] init];
         
         // [adConfigBuilder adRules:(JWAdRules * _Nonnull)];
         
-        id schedule = config[@"adSchedule"];
+        id schedule = ads[@"adSchedule"];
         if(schedule != nil && (schedule != (id)[NSNull null])) {
             NSArray* scheduleAr = (NSArray*)schedule;
             if (scheduleAr.count > 0) {
@@ -598,14 +573,14 @@
                     NSString *tag = [item objectForKey:@"tag"];
                     NSURL* tagUrl = [NSURL URLWithString:tag];
                     
-                    JWAdBreak *adBreak = [JWAdBreak init];
+                    JWError *adBreakError;
                     JWAdBreakBuilder* adBreakBuilder = [[JWAdBreakBuilder alloc] init];
                     JWAdOffset* offset = [JWAdOffset fromString:offsetString];
                     
                     [adBreakBuilder offset:offset];
                     [adBreakBuilder tags:@[tagUrl]];
                     
-                    adBreak = [adBreakBuilder buildAndReturnError:&error];
+                    JWAdBreak *adBreak = [adBreakBuilder buildAndReturnError:&adBreakError];
                     
                     [scheduleArray addObject:adBreak];
                 }
@@ -622,16 +597,30 @@
             [adConfigBuilder tag:tagUrl];
         }
                 
-        id adVmap = config[@"adVmap"];
+        id adVmap = ads[@"adVmap"];
         if (adVmap != nil && (adVmap != (id)[NSNull null])) {
             NSURL* adVmapUrl = [NSURL URLWithString:adVmap];
             [adConfigBuilder vmapURL:adVmapUrl];
         }
         
-        id openBrowserOnAdClick = config[@"openBrowserOnAdClick"];
-        if (openBrowserOnAdClick != nil && (openBrowserOnAdClick != (id)[NSNull null])) {
-            [adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
-        }
+//        id openBrowserOnAdClick = ads[@"openBrowserOnAdClick"];
+//        if (openBrowserOnAdClick != nil && (openBrowserOnAdClick != (id)[NSNull null])) {
+//            [adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
+//        }
+        
+        // Have a reference to the view you want to register as a friendly
+        // obstruction.
+        UIButton *fullScreenButton = [[UIButton alloc] initWithFrame:CGRectZero];
+
+        // Create a JWFriendlyObstruction object using the view you
+        // want to register.
+        JWFriendlyObstruction *obstruction = [[JWFriendlyObstruction alloc] initWithView:fullScreenButton purpose:JWFriendlyObstructionPurposeMediaControls reason:@"Reason"];
+
+        // Create a JWFriendlyObstructionContainer using the
+        // created JWFriendlyObstruction
+        JWFriendlyObstructionsContainer *container = [[JWFriendlyObstructionsContainer alloc] initWithObstructions:@[obstruction]];
+
+        [adConfigBuilder friendlyObstructionsContainer:container];
         
         advertising = [adConfigBuilder buildAndReturnError:&error];
         [configBuilder advertising:advertising];
