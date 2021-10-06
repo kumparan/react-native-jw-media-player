@@ -1,21 +1,21 @@
-import React, { Component } from "react";
-var ReactNative = require("react-native");
+import React, {Component} from 'react';
+var ReactNative = require('react-native');
 import {
   requireNativeComponent,
   UIManager,
   NativeModules,
   Platform,
-} from "react-native";
-import PropTypes from "prop-types";
+} from 'react-native';
+import PropTypes from 'prop-types';
 
 const RNJWPlayerManager =
-  Platform.OS === "ios"
+  Platform.OS === 'ios'
     ? NativeModules.RNJWPlayerViewManager
     : NativeModules.RNJWPlayerModule;
 
-const RCT_RNJWPLAYER_REF = "rnjwplayer";
+const RCT_RNJWPLAYER_REF = 'rnjwplayer';
 
-const RNJWPlayer = requireNativeComponent("RNJWPlayerView", null);
+const RNJWPlayer = requireNativeComponent('RNJWPlayerView', null);
 
 const JWPlayerStateIOS = {
   JWPlayerStateUnknown: 0,
@@ -37,7 +37,7 @@ const JWPlayerStateAndroid = {
 };
 
 export const JWPlayerState =
-  Platform.OS === "ios" ? JWPlayerStateIOS : JWPlayerStateAndroid;
+  Platform.OS === 'ios' ? JWPlayerStateIOS : JWPlayerStateAndroid;
 
 export const JWPlayerAdClients = {
   JWAdClientJWPlayer: 0,
@@ -56,7 +56,7 @@ export default class JWPlayer extends Component {
       autostart: PropTypes.bool,
       controls: PropTypes.bool,
       repeat: PropTypes.bool,
-      preload: PropTypes.oneOf(["0", "1"]),
+      preload: PropTypes.oneOf(['0', '1']),
       playlist: PropTypes.arrayOf(
         PropTypes.shape({
           file: PropTypes.string,
@@ -65,7 +65,7 @@ export default class JWPlayer extends Component {
               file: PropTypes.string,
               label: PropTypes.string,
               default: PropTypes.bool,
-            }),
+            })
           ),
           image: PropTypes.string,
           title: PropTypes.string,
@@ -77,13 +77,13 @@ export default class JWPlayer extends Component {
             PropTypes.shape({
               file: PropTypes.string,
               label: PropTypes.string,
-            }),
+            })
           ),
           adSchedule: PropTypes.arrayOf(
             PropTypes.shape({
               tag: PropTypes.string,
               offset: PropTypes.string,
-            }),
+            })
           ),
           adVmap: PropTypes.string,
           startTime: PropTypes.number,
@@ -95,7 +95,7 @@ export default class JWPlayer extends Component {
           PropTypes.shape({
             tag: PropTypes.string,
             offset: PropTypes.string,
-          }),
+          })
         ),
         adVmap: PropTypes.string,
         tag: PropTypes.string,
@@ -103,7 +103,7 @@ export default class JWPlayer extends Component {
       }),
 
       // controller only
-      interfaceBehavior: PropTypes.oneOf(["0", "1", "2"]),
+      interfaceBehavior: PropTypes.oneOf(['0', '1', '2']),
       styling: PropTypes.shape({
         colors: PropTypes.shape({
           buttons: PropTypes.string,
@@ -126,7 +126,7 @@ export default class JWPlayer extends Component {
             backgroundColor: PropTypes.string,
             fontColor: PropTypes.string,
             highlightColor: PropTypes.string,
-            edgeStyle: PropTypes.oneOf(["1", "2" ,"3", "4", "5", "6"])
+            edgeStyle: PropTypes.oneOf(['1', '2', '3', '4', '5', '6']),
           }),
           menuStyle: PropTypes.shape({
             font: PropTypes.shape({
@@ -142,12 +142,13 @@ export default class JWPlayer extends Component {
       }),
       nextUpStyle: PropTypes.shape({
         offsetSeconds: PropTypes.number,
-        offsetPercentage: PropTypes.number
+        offsetPercentage: PropTypes.number,
       }),
       offlineMessage: PropTypes.string,
       offlineImage: PropTypes.string,
       forceFullScreenOnLandscape: PropTypes.bool,
       forceLandscapeOnFullScreen: PropTypes.bool,
+      exitFullScreenOnPortrait: PropTypes.bool,
       enableLockScreenControls: PropTypes.bool,
       stretching: PropTypes.oneOf(['uniform', 'exactFit', 'fill', 'none']),
     }),
@@ -227,7 +228,7 @@ export default class JWPlayer extends Component {
   }
 
   setControls(show) {
-    if (RNJWPlayerManager && Platform.OS === "android")
+    if (RNJWPlayerManager && Platform.OS === 'android')
       RNJWPlayerManager.setControls(this.getRNJWPlayerBridgeHandle(), show);
   }
 
@@ -264,17 +265,17 @@ export default class JWPlayer extends Component {
   }
 
   setUpCastController() {
-    if (RNJWPlayerManager && Platform.OS === "ios")
+    if (RNJWPlayerManager && Platform.OS === 'ios')
       RNJWPlayerManager.setUpCastController(this.getRNJWPlayerBridgeHandle());
   }
 
   presentCastDialog() {
-    if (RNJWPlayerManager && Platform.OS === "ios")
+    if (RNJWPlayerManager && Platform.OS === 'ios')
       RNJWPlayerManager.presentCastDialog(this.getRNJWPlayerBridgeHandle());
   }
 
   async connectedDevice() {
-    if (RNJWPlayerManager && Platform.OS === "ios") {
+    if (RNJWPlayerManager && Platform.OS === 'ios') {
       try {
         var connectedDevice = await RNJWPlayerManager.connectedDevice(
           this.getRNJWPlayerBridgeHandle()
@@ -288,7 +289,7 @@ export default class JWPlayer extends Component {
   }
 
   async availableDevices() {
-    if (RNJWPlayerManager && Platform.OS === "ios") {
+    if (RNJWPlayerManager && Platform.OS === 'ios') {
       try {
         var availableDevices = await RNJWPlayerManager.availableDevices(
           this.getRNJWPlayerBridgeHandle()
@@ -302,7 +303,7 @@ export default class JWPlayer extends Component {
   }
 
   async castState() {
-    if (RNJWPlayerManager && Platform.OS === "ios") {
+    if (RNJWPlayerManager && Platform.OS === 'ios') {
       try {
         var castState = await RNJWPlayerManager.castState(
           this.getRNJWPlayerBridgeHandle()
@@ -330,6 +331,9 @@ export default class JWPlayer extends Component {
   }
 
   getRNJWPlayerBridgeHandle() {
+    if (this.props.ref) {
+      return ReactNative.findNodeHandle(this.props.ref);
+    }
     return ReactNative.findNodeHandle(this.refs[RCT_RNJWPLAYER_REF]);
   }
 
@@ -377,14 +381,14 @@ export default class JWPlayer extends Component {
     if (playlist && thisConfig.playlist) {
       return !this.arraysAreEqual(playlist, thisConfig.playlist);
     } else if (!playlist && thisConfig.playlist) {
-      return true
+      return true;
     }
 
     return false;
   }
 
   arraysAreEqual(ary1, ary2) {
-    return ary1?.join("") == ary2?.join("");
+    return ary1?.join('') == ary2?.join('');
   }
 
   render() {

@@ -9,6 +9,7 @@ import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.media.AudioManager;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +31,7 @@ import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 import com.google.gson.Gson;
 import com.jwplayer.pub.api.JWPlayer;
+import com.jwplayer.pub.api.UiGroup;
 import com.jwplayer.pub.api.background.MediaServiceController;
 import com.jwplayer.pub.api.configuration.PlayerConfig;
 import com.jwplayer.pub.api.configuration.UiConfig;
@@ -38,12 +40,29 @@ import com.jwplayer.pub.api.configuration.ads.VastAdvertisingConfig;
 import com.jwplayer.pub.api.configuration.ads.VmapAdvertisingConfig;
 import com.jwplayer.pub.api.configuration.ads.ima.ImaAdvertisingConfig;
 import com.jwplayer.pub.api.configuration.ads.ima.dai.ImaDaiAdvertisingConfig;
+import com.jwplayer.pub.api.events.AdBreakEndEvent;
+import com.jwplayer.pub.api.events.AdBreakIgnoredEvent;
+import com.jwplayer.pub.api.events.AdBreakStartEvent;
+import com.jwplayer.pub.api.events.AdClickEvent;
+import com.jwplayer.pub.api.events.AdCompanionsEvent;
+import com.jwplayer.pub.api.events.AdCompleteEvent;
+import com.jwplayer.pub.api.events.AdErrorEvent;
+import com.jwplayer.pub.api.events.AdImpressionEvent;
+import com.jwplayer.pub.api.events.AdMetaEvent;
 import com.jwplayer.pub.api.events.AdPauseEvent;
 import com.jwplayer.pub.api.events.AdPlayEvent;
+import com.jwplayer.pub.api.events.AdRequestEvent;
+import com.jwplayer.pub.api.events.AdScheduleEvent;
+import com.jwplayer.pub.api.events.AdSkippedEvent;
+import com.jwplayer.pub.api.events.AdStartedEvent;
+import com.jwplayer.pub.api.events.AdTimeEvent;
+import com.jwplayer.pub.api.events.AdViewableImpressionEvent;
+import com.jwplayer.pub.api.events.AdWarningEvent;
 import com.jwplayer.pub.api.events.AudioTrackChangedEvent;
 import com.jwplayer.pub.api.events.AudioTracksEvent;
 import com.jwplayer.pub.api.events.BeforeCompleteEvent;
 import com.jwplayer.pub.api.events.BeforePlayEvent;
+import com.jwplayer.pub.api.events.BufferChangeEvent;
 import com.jwplayer.pub.api.events.BufferEvent;
 import com.jwplayer.pub.api.events.CaptionsChangedEvent;
 import com.jwplayer.pub.api.events.CaptionsListEvent;
@@ -53,25 +72,45 @@ import com.jwplayer.pub.api.events.ControlBarVisibilityEvent;
 import com.jwplayer.pub.api.events.ControlsEvent;
 import com.jwplayer.pub.api.events.DisplayClickEvent;
 import com.jwplayer.pub.api.events.ErrorEvent;
+import com.jwplayer.pub.api.events.EventMessageMetadataEvent;
 import com.jwplayer.pub.api.events.EventType;
+import com.jwplayer.pub.api.events.ExternalMetadataEvent;
 import com.jwplayer.pub.api.events.FirstFrameEvent;
 import com.jwplayer.pub.api.events.FullscreenEvent;
 import com.jwplayer.pub.api.events.IdleEvent;
+import com.jwplayer.pub.api.events.InPlaylistTimedMetadataEvent;
+import com.jwplayer.pub.api.events.LevelsChangedEvent;
+import com.jwplayer.pub.api.events.LevelsEvent;
+import com.jwplayer.pub.api.events.MetaEvent;
+import com.jwplayer.pub.api.events.MuteEvent;
 import com.jwplayer.pub.api.events.PauseEvent;
 import com.jwplayer.pub.api.events.PipCloseEvent;
 import com.jwplayer.pub.api.events.PipOpenEvent;
 import com.jwplayer.pub.api.events.PlayEvent;
+import com.jwplayer.pub.api.events.PlaybackRateChangedEvent;
 import com.jwplayer.pub.api.events.PlaylistCompleteEvent;
 import com.jwplayer.pub.api.events.PlaylistEvent;
 import com.jwplayer.pub.api.events.PlaylistItemEvent;
 import com.jwplayer.pub.api.events.ReadyEvent;
+import com.jwplayer.pub.api.events.RelatedCloseEvent;
+import com.jwplayer.pub.api.events.RelatedOpenEvent;
+import com.jwplayer.pub.api.events.RelatedPlayEvent;
 import com.jwplayer.pub.api.events.SeekEvent;
 import com.jwplayer.pub.api.events.SeekedEvent;
 import com.jwplayer.pub.api.events.SetupErrorEvent;
+import com.jwplayer.pub.api.events.SharingClickEvent;
+import com.jwplayer.pub.api.events.SharingCloseEvent;
+import com.jwplayer.pub.api.events.SharingOpenEvent;
 import com.jwplayer.pub.api.events.TimeEvent;
+import com.jwplayer.pub.api.events.ViewableEvent;
+import com.jwplayer.pub.api.events.VisualQualityEvent;
+import com.jwplayer.pub.api.events.VolumeEvent;
+import com.jwplayer.pub.api.events.WarningEvent;
 import com.jwplayer.pub.api.events.listeners.AdvertisingEvents;
 import com.jwplayer.pub.api.events.listeners.CastingEvents;
 import com.jwplayer.pub.api.events.listeners.PipPluginEvents;
+import com.jwplayer.pub.api.events.listeners.RelatedPluginEvents;
+import com.jwplayer.pub.api.events.listeners.SharingPluginEvents;
 import com.jwplayer.pub.api.events.listeners.VideoPlayerEvents;
 import com.jwplayer.pub.api.fullscreen.FullscreenHandler;
 import com.jwplayer.pub.api.license.LicenseUtil;
@@ -111,31 +150,53 @@ public class RNJWPlayerView extends RelativeLayout implements
         VideoPlayerEvents.OnSeekedListener,
         VideoPlayerEvents.OnCaptionsListListener,
         VideoPlayerEvents.OnCaptionsChangedListener,
+        VideoPlayerEvents.OnMetaListener,
+        VideoPlayerEvents.OnBufferChangeListener,
+        VideoPlayerEvents.OnPlaybackRateChangedListener,
+        VideoPlayerEvents.OnViewableListener,
+        VideoPlayerEvents.OnInPlaylistTimedMetadataListener,
+        VideoPlayerEvents.OnEventMessageMetadataListener,
+        VideoPlayerEvents.OnExternalMetadataListener,
+        VideoPlayerEvents.OnWarningListener,
+        VideoPlayerEvents.OnLevelsListener,
+        VideoPlayerEvents.OnLevelsChangedListener,
+        VideoPlayerEvents.OnVisualQualityListener,
+        VideoPlayerEvents.OnMuteListener,
+        VideoPlayerEvents.OnVolumeListener,
 
         AdvertisingEvents.OnBeforePlayListener,
         AdvertisingEvents.OnBeforeCompleteListener,
         AdvertisingEvents.OnAdPauseListener,
         AdvertisingEvents.OnAdPlayListener,
+        AdvertisingEvents.OnAdRequestListener,
+        AdvertisingEvents.OnAdScheduleListener,
+        AdvertisingEvents.OnAdStartedListener,
+        AdvertisingEvents.OnAdBreakStartListener,
+        AdvertisingEvents.OnAdBreakEndListener,
+        AdvertisingEvents.OnAdClickListener,
+        AdvertisingEvents.OnAdCompleteListener,
+        AdvertisingEvents.OnAdCompanionsListener,
+        AdvertisingEvents.OnAdErrorListener,
+        AdvertisingEvents.OnAdImpressionListener,
+        AdvertisingEvents.OnAdMetaListener,
+        AdvertisingEvents.OnAdSkippedListener,
+        AdvertisingEvents.OnAdTimeListener,
+        AdvertisingEvents.OnAdViewableImpressionListener,
+        AdvertisingEvents.OnAdBreakIgnoredListener,
+        AdvertisingEvents.OnAdWarningListener,
 
         CastingEvents.OnCastListener,
 
         PipPluginEvents.OnPipCloseListener,
         PipPluginEvents.OnPipOpenListener,
 
-//        AdvertisingEvents.OnAdRequestListener,
-//        AdvertisingEvents.OnAdScheduleListener,
-//        AdvertisingEvents.OnAdStartedListener,
-//        AdvertisingEvents.OnAdBreakStartListener,
-//        AdvertisingEvents.OnAdBreakEndListener,
-//        AdvertisingEvents.OnAdClickListener,
-//        AdvertisingEvents.OnAdCompleteListener,
-//        AdvertisingEvents.OnAdCompanionsListener,
-//        AdvertisingEvents.OnAdErrorListener,
-//        AdvertisingEvents.OnAdImpressionListener,
-//        AdvertisingEvents.OnAdMetaListener,
-//        AdvertisingEvents.OnAdSkippedListener,
-//        AdvertisingEvents.OnAdTimeListener,
-//        AdvertisingEvents.OnAdViewableImpressionListener,
+        SharingPluginEvents.OnSharingClickListener,
+        SharingPluginEvents.OnSharingOpenListener,
+        SharingPluginEvents.OnSharingCloseListener,
+
+        RelatedPluginEvents.OnRelatedPlayListener,
+        RelatedPluginEvents.OnRelatedCloseListener,
+        RelatedPluginEvents.OnRelatedOpenListener,
 
         LifecycleEventListener {
     public RNJWPlayer mPlayerView = null;
@@ -150,9 +211,9 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     Boolean backgroundAudioEnabled = false;
 
-    Boolean landscapeOnFullScreen = false;
-    Boolean fullScreenOnLandscape = false;
-    Boolean portraitOnExitFullScreen = false;
+    Boolean landscapeOnFullScreen = true;
+    Boolean fullScreenOnLandscape = true;
+    Boolean portraitOnExitFullScreen = true;
     Boolean exitFullScreenOnPortrait = false;
 
     Number currentPlayingIndex;
@@ -176,10 +237,6 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     private void doBindService() {
         mMediaServiceController.bindService();
-    }
-
-    private void doUnbindService() {
-        mMediaServiceController.unbindService();
     }
 
     private static boolean contextHasBug(Context context) {
@@ -246,7 +303,7 @@ public class RNJWPlayerView extends RelativeLayout implements
 
             audioManager = null;
 
-            doUnbindService();
+            //doUnbindService();
         }
     }
 
@@ -293,6 +350,181 @@ public class RNJWPlayerView extends RelativeLayout implements
 
             mPlayer.allowBackgroundAudio(backgroundAudioEnabled);
         }
+    }
+
+    @Override
+    public void onMeta(MetaEvent metaEvent) {
+
+    }
+
+    @Override
+    public void onMeta(InPlaylistTimedMetadataEvent inPlaylistTimedMetadataEvent) {
+
+    }
+
+    @Override
+    public void onMeta(EventMessageMetadataEvent eventMessageMetadataEvent) {
+
+    }
+
+    @Override
+    public void onMeta(ExternalMetadataEvent externalMetadataEvent) {
+
+    }
+
+    @Override
+    public void onBufferChange(BufferChangeEvent bufferChangeEvent) {
+
+    }
+
+    @Override
+    public void onPlaybackRateChanged(PlaybackRateChangedEvent playbackRateChangedEvent) {
+
+    }
+
+    @Override
+    public void onViewable(ViewableEvent viewableEvent) {
+
+    }
+
+    @Override
+    public void onSharingClick(SharingClickEvent sharingClickEvent) {
+
+    }
+
+    @Override
+    public void onSharingOpen(SharingOpenEvent sharingOpenEvent) {
+
+    }
+
+    @Override
+    public void onSharingClose(SharingCloseEvent sharingCloseEvent) {
+
+    }
+
+    @Override
+    public void onRelatedPlay(RelatedPlayEvent relatedPlayEvent) {
+
+    }
+
+    @Override
+    public void onRelatedClose(RelatedCloseEvent relatedCloseEvent) {
+
+    }
+
+    @Override
+    public void onRelatedOpen(RelatedOpenEvent relatedOpenEvent) {
+
+    }
+
+    @Override
+    public void onAdBreakEnd(AdBreakEndEvent adBreakEndEvent) {
+
+    }
+
+    @Override
+    public void onAdBreakStart(AdBreakStartEvent adBreakStartEvent) {
+
+    }
+
+    @Override
+    public void onAdClick(AdClickEvent adClickEvent) {
+
+    }
+
+    @Override
+    public void onAdCompanions(AdCompanionsEvent adCompanionsEvent) {
+
+    }
+
+    @Override
+    public void onAdComplete(AdCompleteEvent adCompleteEvent) {
+
+    }
+
+    @Override
+    public void onAdError(AdErrorEvent adErrorEvent) {
+
+    }
+
+    @Override
+    public void onAdImpression(AdImpressionEvent adImpressionEvent) {
+
+    }
+
+    @Override
+    public void onAdMeta(AdMetaEvent adMetaEvent) {
+
+    }
+
+    @Override
+    public void onAdRequest(AdRequestEvent adRequestEvent) {
+
+    }
+
+    @Override
+    public void onAdSchedule(AdScheduleEvent adScheduleEvent) {
+
+    }
+
+    @Override
+    public void onAdSkipped(AdSkippedEvent adSkippedEvent) {
+
+    }
+
+    @Override
+    public void onAdStarted(AdStartedEvent adStartedEvent) {
+
+    }
+
+    @Override
+    public void onAdTime(AdTimeEvent adTimeEvent) {
+
+    }
+
+    @Override
+    public void onAdViewableImpression(AdViewableImpressionEvent adViewableImpressionEvent) {
+
+    }
+
+    @Override
+    public void onAdBreakIgnored(AdBreakIgnoredEvent adBreakIgnoredEvent) {
+
+    }
+
+    @Override
+    public void onAdWarning(AdWarningEvent adWarningEvent) {
+
+    }
+
+    @Override
+    public void onWarning(WarningEvent warningEvent) {
+
+    }
+
+    @Override
+    public void onLevelsChanged(LevelsChangedEvent levelsChangedEvent) {
+
+    }
+
+    @Override
+    public void onLevels(LevelsEvent levelsEvent) {
+
+    }
+
+    @Override
+    public void onVisualQuality(VisualQualityEvent visualQualityEvent) {
+
+    }
+
+    @Override
+    public void onMute(MuteEvent muteEvent) {
+
+    }
+
+    @Override
+    public void onVolume(VolumeEvent volumeEvent) {
+
     }
 
     private class fullscreenHandler implements FullscreenHandler {
@@ -468,22 +700,6 @@ public class RNJWPlayerView extends RelativeLayout implements
             itemBuilder.tracks(tracks);
         }
 
-        if (playlistItem.hasKey("adSchedule")) {
-            ArrayList<AdBreak> adSchedule = new ArrayList<>();
-            ReadableArray ad = playlistItem.getArray("adSchedule");
-
-            for (int i = 0; i < ad.size(); i++) {
-                ReadableMap adBreakProp = ad.getMap(i);
-                String offset = adBreakProp.hasKey("offset") ? adBreakProp.getString("offset") : "pre";
-                if (adBreakProp.hasKey("tag")) {
-                    AdBreak adBreak = new AdBreak.Builder().offset(offset).tag(adBreakProp.getString("tag")).build();
-                    adSchedule.add(adBreak);
-                }
-            }
-
-            itemBuilder.adSchedule(adSchedule);
-        }
-
         String recommendations;
         if (playlistItem.hasKey("recommendations")) {
             recommendations = playlistItem.getString("recommendations");
@@ -512,6 +728,7 @@ public class RNJWPlayerView extends RelativeLayout implements
     private void setupPlayer(ReadableMap prop) {
         PlayerConfig.Builder configBuilder = new PlayerConfig.Builder();
 
+
         if (playlistNotTheSame(prop)) {
             List<PlaylistItem> playlist = new ArrayList<>();
             mPlaylistProp = prop.getArray("playlist");
@@ -528,6 +745,7 @@ public class RNJWPlayerView extends RelativeLayout implements
             }
 
             configBuilder.playlist(playlist);
+
         }
 
         if (prop.hasKey("autostart")) {
@@ -569,60 +787,32 @@ public class RNJWPlayerView extends RelativeLayout implements
         }
 
         List<AdBreak> adScheduleList = new ArrayList<>();
-        AdClient client;
         AdvertisingConfig advertisingConfig;
 
         if (prop.hasKey("advertising")) {
             ReadableMap ads = prop.getMap("advertising");
             if (ads != null && ads.hasKey("adSchedule")) {
-                ReadableMap adSchedule = ads.getMap("adSchedule");
-                if (adSchedule.hasKey("tag") && adSchedule.hasKey("offset")) {
-                    String tag = adSchedule.getString("tag");
-                    String offset = adSchedule.getString("offset");
-//            int skipOffset = prop.getInt("skipOffset");
-//            String adTypeStr = prop.getString("adType");
-//            List<String> tags = (List<String>) prop.getArray("tags");
+                ReadableArray adSchedulesFromJS = ads.getArray("adSchedule");
 
-                    AdBreak adBreak = new AdBreak.Builder()
-                            .tag(tag)
-                            .offset(offset)
-//                    .skipOffset(skipOffset)
-//                    .adType(adTypeStr.equals("LINEAR") ? AdType.LINEAR : AdType.NONLINEAR)
-//                    .tag(tags)
-//                    .customParams()
-                            .build();
-
-                    adScheduleList.add(adBreak);
-                }
-
-                if (ads.hasKey("adClient")) {
-                    switch (ads.getInt("adClient")) {
-                        case 1:
-                            client = AdClient.IMA;
-                            advertisingConfig = new ImaAdvertisingConfig.Builder().schedule(adScheduleList).build();
-                            break;
-                        case 2:
-                            client = AdClient.IMA_DAI;
-                            advertisingConfig = new ImaDaiAdvertisingConfig.Builder().build();
-                            break;
-                        default:
-                            client = AdClient.VAST;
-                            advertisingConfig = new VastAdvertisingConfig.Builder()
-                                    .schedule(adScheduleList)
-                                    .build();
-                            break;
+                for (int i = 0; i < adSchedulesFromJS.size(); i++) {
+                    ReadableMap adBreakProp = adSchedulesFromJS.getMap(i);
+                    String offset = adBreakProp.hasKey("offset") ? adBreakProp.getString("offset") : "pre";
+                    if (adBreakProp.hasKey("tag")) {
+                        AdBreak adBreak = new AdBreak.Builder().offset(offset).tag(adBreakProp.getString("tag")).build();
+                        adScheduleList.add(adBreak);
                     }
-                } else {
-                    client = AdClient.VAST;
-                    advertisingConfig = new VastAdvertisingConfig.Builder()
-                            .schedule(adScheduleList)
-                            .build();
                 }
 
-                configBuilder.advertisingConfig(advertisingConfig);
-            } else if (ads != null && ads.hasKey("adVmap")) {
-                String adVmap = ads.getString("adVmap");
-                advertisingConfig = new VmapAdvertisingConfig.Builder().tag(adVmap).build();
+                int adSkipOffset = ads.hasKey("skipOffset") ? ads.getInt("skipOffset") : 5;
+                String adSkipOffsetText = ads.hasKey("skipOffsetText") ? ads.getString("skipOffsetText") : "Skip ad XX";
+                String adSkipText = ads.hasKey("skipText") ? ads.getString("skipText") : "Skip ad";
+
+                advertisingConfig = new VastAdvertisingConfig.Builder()
+                        .schedule(adScheduleList)
+                        .skipOffset(adSkipOffset)
+                        .skipMessage(adSkipOffsetText)
+                        .skipText(adSkipText)
+                        .build();
 
                 configBuilder.advertisingConfig(advertisingConfig);
             }
@@ -639,11 +829,11 @@ public class RNJWPlayerView extends RelativeLayout implements
                 UiConfig uiConfig = new UiConfig.Builder().hideAllControls().build();
                 configBuilder.uiConfig(uiConfig);
             }
-
-            // in future support hiding showing individual ui groups
-//            UiConfig hideJwControlbarUiConfig = new UiConfig.Builder()
-//                    .hide(UiGroup.CONTROLBAR)
-//                    .build();
+            UiConfig hideCastButton = new UiConfig.Builder()
+                    .displayAllControls()
+                    .hide(UiGroup.CASTING_MENU)
+                    .build();
+            configBuilder.uiConfig(hideCastButton);
         }
 
         PlayerConfig playerConfig = configBuilder.build();
@@ -660,8 +850,8 @@ public class RNJWPlayerView extends RelativeLayout implements
                 LinearLayout.LayoutParams.MATCH_PARENT));
         addView(mPlayerView);
 
-        if (prop.hasKey("fullScreenOnLandscape")) {
-            fullScreenOnLandscape = prop.getBoolean("fullScreenOnLandscape");
+        if (prop.hasKey("forceFullScreenOnLandscape")) {
+            fullScreenOnLandscape = prop.getBoolean("forceFullScreenOnLandscape");
             mPlayerView.fullScreenOnLandscape = fullScreenOnLandscape;
         }
 
@@ -740,7 +930,7 @@ public class RNJWPlayerView extends RelativeLayout implements
     }
 
     // AdEvents
-    
+
     @Override
     public void onAdPause(AdPauseEvent adPauseEvent) {
         WritableMap event = Arguments.createMap();
@@ -880,9 +1070,6 @@ public class RNJWPlayerView extends RelativeLayout implements
 
     @Override
     public void onPlay(PlayEvent playEvent) {
-//        if (backgroundAudioEnabled) {
-//            requestAudioFocus();
-//        }
 
         WritableMap event = Arguments.createMap();
         event.putString("message", "onPlay");
