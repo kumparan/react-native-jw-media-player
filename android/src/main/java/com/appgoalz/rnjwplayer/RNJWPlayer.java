@@ -3,13 +3,14 @@ package com.appgoalz.rnjwplayer;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import com.jwplayer.pub.view.JWPlayerView;
 
 public class RNJWPlayer extends JWPlayerView {
-    public Boolean fullScreenOnLandscape = false;
-    public Boolean exitFullScreenOnPortrait = false;
+    public Boolean fullScreenOnLandscape = true;
+    public Boolean exitFullScreenOnPortrait = true;
 
     public RNJWPlayer(Context var1) {
         super(var1);
@@ -55,13 +56,11 @@ public class RNJWPlayer extends JWPlayerView {
         super.onConfigurationChanged(newConfig);
 
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            if (fullScreenOnLandscape) {
-                this.getPlayer().setFullscreen(true,true);
-            }
+            Log.d("RENO", "LANDSCAPE ORIENTATION");
+            this.getPlayer().setFullscreen(true,true);
         } else if (newConfig.orientation==Configuration.ORIENTATION_PORTRAIT) {
-            if (exitFullScreenOnPortrait) {
-                this.getPlayer().setFullscreen(false,false);
-            }
+            Log.d("RENO", "LANDSCAPE ORIENTATION");
+            this.getPlayer().setFullscreen(false,false);
         }
     }
 

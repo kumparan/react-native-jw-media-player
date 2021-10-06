@@ -27,8 +27,6 @@ public class RNJWPlayerViewManager extends SimpleViewManager<RNJWPlayerView> {
 
   private final ReactApplicationContext mAppContext;
 
-  private static final String TAG = "RNJWPlayerViewManager";
-
   @Override
   public String getName() {
     return REACT_CLASS;

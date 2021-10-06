@@ -1,6 +1,6 @@
 {
-  "name": "react-native-jw-media-player",
-  "version": "0.2.0-beta.2",
+  "name": "@gurukumparan/react-native-jw-media-player",
+  "version": "0.2.0-beta.3",
   "description": "React-native Android/iOS plugin for JWPlayer SDK (https://www.jwplayer.com/)",
   "main": "index.js",
   "types": "./index.d.ts",
@@ -12,7 +12,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chaimPaneth/react-native-jw-media-player.git"
+    "url": "git+https://github.com/kumparan/react-native-jw-media-player.git"
   },
   "keywords": [
     "react",
@@ -29,9 +29,15 @@
     "video",
     "sdk"
   ],
-  "author": "chaimPaneth <chaim@chaimpaneth.com> (chaimpaneth.com)",
+  "author": "kumparan <oss@kumparan.com> (https://kumparan.com)",
   "license": "MIT",
-  "homepage": "https://github.com/chaimPaneth/react-native-jw-media-player#readme",
+  "bugs": {
+    "url": "https://github.com/kumparan/react-native-jw-media-player/issues"
+  },
+  "homepage": "https://github.com/kumparan/react-native-jw-media-player#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "peerDependencies": {
     "react": ">= 16.13.1",
     "react-native": ">= 0.63.2"
