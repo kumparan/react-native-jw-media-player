@@ -3,6 +3,7 @@
 #import <AVKit/AVKit.h>
 #import <MediaPlayer/MediaPlayer.h>
 #import "RCTConvert+RNJWPlayer.h"
+#import "RNSScreen.h"
 
 @implementation RNJWPlayerView
 
@@ -497,35 +498,7 @@
     if (ads != nil && (ads != (id)[NSNull null])) {
         JWAdvertisingConfig* advertising;
         JWAdsAdvertisingConfigBuilder* adConfigBuilder = [[JWAdsAdvertisingConfigBuilder alloc] init];
-                 
-         id adClient = ads[@"adClient"];
-         if ((adClient != nil) && (adClient != (id)[NSNull null])) {
-             int clientType = (int)[RCTConvert JWAdClient:adClient];
-             JWAdClient jwAdClient;
-             switch (clientType) {
-                 case 0:
-                     jwAdClient = JWAdClientJWPlayer;
-                     break;
-                 case 1:
-    //                 JWImaAdvertisingConfigBuilder
-                     jwAdClient = JWAdClientGoogleIMA;
-                     break;
-                 case 2:
-    //                 JWImaDaiAdvertisingConfigBuilder
-                     jwAdClient = JWAdClientGoogleIMADAI;
-                     break;
-                 case 3:
-                     jwAdClient = JWAdClientUnknown;
-                     break;
 
-                 default:
-                     jwAdClient = JWAdClientUnknown;
-                     break;
-             }
-         } else {
-
-         }
-        
         // [adConfigBuilder adRules:(JWAdRules * _Nonnull)];
         
         id schedule = ads[@"adSchedule"];
@@ -539,14 +512,14 @@
                     NSString *tag = [item objectForKey:@"tag"];
                     NSURL* tagUrl = [NSURL URLWithString:tag];
                     
-                    JWAdBreak *adBreak = [JWAdBreak init];
+                    JWError *adBreakError;
                     JWAdBreakBuilder* adBreakBuilder = [[JWAdBreakBuilder alloc] init];
                     JWAdOffset* offset = [JWAdOffset fromString:offsetString];
                     
                     [adBreakBuilder offset:offset];
                     [adBreakBuilder tags:@[tagUrl]];
                     
-                    adBreak = [adBreakBuilder buildAndReturnError:&error];
+                    JWAdBreak *adBreak = [adBreakBuilder buildAndReturnError:&adBreakError];
                     
                     [scheduleArray addObject:adBreak];
                 }
@@ -664,7 +637,11 @@
 -(void)presentPlayerViewController:(JWPlayerConfiguration*)configuration
 {
     UIWindow *window = (UIWindow*)[[UIApplication sharedApplication] keyWindow];
-    [window.rootViewController addChildViewController:_playerViewController];
+    for (UIViewController *childVC in window.rootViewController.childViewControllers) {  
+      if ([childVC isKindOfClass:[RNSScreen class]] && ((RNSScreenView *)((RNSScreen *)childVC.view)).activityState == RNSActivityStateOnTop) {
+          [childVC addChildViewController:_playerViewController];
+      }
+    }
     _playerViewController.view.frame = self.superview.frame;
     [self addSubview:_playerViewController.view];
     [_playerViewController didMoveToParentViewController:window.rootViewController];
