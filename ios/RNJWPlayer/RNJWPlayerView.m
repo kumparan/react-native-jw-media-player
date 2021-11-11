@@ -496,9 +496,7 @@
     
     id ads = config[@"advertising"];
     if (ads != nil && (ads != (id)[NSNull null])) {
-        JWAdvertisingConfig* advertising;
         JWAdsAdvertisingConfigBuilder* adConfigBuilder = [[JWAdsAdvertisingConfigBuilder alloc] init];
-
         // [adConfigBuilder adRules:(JWAdRules * _Nonnull)];
         
         id schedule = ads[@"adSchedule"];
@@ -546,8 +544,8 @@
         if (openBrowserOnAdClick != nil && (openBrowserOnAdClick != (id)[NSNull null])) {
             [adConfigBuilder openBrowserOnAdClick:openBrowserOnAdClick];
         }
-        
-        advertising = [adConfigBuilder buildAndReturnError:&error];
+        JWError *advertisingError;
+        JWAdvertisingConfig* advertising = [adConfigBuilder buildAndReturnError:&advertisingError];
         [configBuilder advertising:advertising];
     }
     
@@ -1023,7 +1021,7 @@
         NSMutableDictionary* schedDict = [[NSMutableDictionary alloc] init];
         for (JWAdBreak* sched in item.adSchedule) {
             [schedDict setObject:sched.offset forKey:@"offset"];
-            [schedDict setObject:sched.tagArray forKey:@"tags"];
+            [schedDict setObject:sched.tags forKey:@"tags"];
             [schedDict setObject:@(sched.type) forKey:@"type"];
         }
         
@@ -1074,7 +1072,7 @@
             NSMutableDictionary* schedDict = [[NSMutableDictionary alloc] init];
             for (JWAdBreak* sched in item.adSchedule) {
                 [schedDict setObject:sched.offset forKey:@"offset"];
-                [schedDict setObject:sched.tagArray forKey:@"tags"];
+                [schedDict setObject:sched.tags forKey:@"tags"];
                 [schedDict setObject:@(sched.type) forKey:@"type"];
             }
             
@@ -1370,6 +1368,10 @@
 - (void)jwplayer:(id<JWPlayer> _Nonnull)player updatedCaptionList:(NSArray<JWMediaSelectionOption *> * _Nonnull)options {
     
 }
+
+- (void)jwplayer:(id<JWPlayer> _Nonnull)player updatedCues:(NSArray<JWCue *> * _Nonnull)cues {}
+
+- (void)jwplayer:(id<JWPlayer> _Nonnull)player isBufferingWithReason:(enum JWBufferReason)reason {}
 
 #pragma mark - JWPlayer audio session && interruption handling
 
